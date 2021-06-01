@@ -26,10 +26,10 @@ OneWire oneWire(oneWireBus);                          // Setup a oneWire instanc
 DallasTemperature sensors(&oneWire);                  // Pass our oneWire reference to Dallas Temperature sensor 
 
 //Module GPS
-static const int TXPin = 5, RXPin = 16;               //Pinout TX for pin D1 e RX for pin D0
+static const int TXPin = 5, RXPin = 16;               //Pinout TX for pin D1 and RX for pin D0
 float latitude;                                       // holds the incoming raw data
 float longitude;                                      // holds the incoming raw data
-SoftwareSerial Serial_GPS(TXPin, RXPin);              //Conexão serial do module GPS
+SoftwareSerial Serial_GPS(TXPin, RXPin);              //GPS module serial connection
 
 WiFiClient espClient;
 HTTPClient http;
