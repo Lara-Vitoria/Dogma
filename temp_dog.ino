@@ -8,38 +8,30 @@
 
 
 //  Variables
-
-const char* orionAddressPath = "3.88.180.168:1026/v2"; //IP Address 
-
+//Helix and internet
+const char* orionAddressPath = "3.88.180.168:1026/v2"; //Helix IP Address 
 const char* deviceID = "urn:ngsi-ld:entity:001"; //Device ID (example: urn:ngsi-ld:entity:001) 
+const char* ssid = "SSID"; //Wi-Fi Credentials - replace with your SSID
+const char* password = "PASSWORD"; //Wi-Fi Credentials - replace with your Password
 
-const char* ssid = "BEST FAMILY"; //Wi-Fi Credentials
-const char* password = "pedroasafe"; //Wi-Fi Credentials
-
+//Pulse Sensor
 const int PulseSensorPurplePin = A0;        // Pulse Sensor PURPLE WIRE connected to ANALOG PIN 0
-
 const int Threshold = 550;            // Determine which Signal to "count as a beat", and which to ingore.
-
-const int oneWireBus = 4; // GPIO where the DS18B20 is connected to    
-
-float temperature;
 int pulse;   // holds the incoming raw data. Signal value can range from 0-1024
 
-//Pinagem TX para pino D1 e RX para o pino D2
-static const int TXPin = 5, RXPin = 16;
+//DS18B20
+static const int TXPin = 5, RXPin = 16; //Pinagem TX para pino D1 e RX para o pino D2
+const int oneWireBus = 4; // GPIO where the DS18B20 is connected to 
+float temperature;
+OneWire oneWire(oneWireBus); // Setup a oneWire instance to communicate with any OneWire devices
+DallasTemperature sensors(&oneWire); // Pass our oneWire reference to Dallas Temperature sensor 
+
+//Module GPS
+SoftwareSerial Serial_GPS(TXPin, RXPin); //Conexão serial do module GPS
 
 WiFiClient espClient;
 HTTPClient http;
 TinyGPSPlus gps;
-
-// Setup a oneWire instance to communicate with any OneWire devices
-OneWire oneWire(oneWireBus);
-
-// Pass our oneWire reference to Dallas Temperature sensor 
-DallasTemperature sensors(&oneWire);
-
-//Conexão serial do modulo GPS
-SoftwareSerial Serial_GPS(TXPin, RXPin);
 
 // The SetUp Function:
 void setup() {
@@ -64,12 +56,10 @@ void setup() {
   // Start the DS18B20 sensor
   sensors.begin();
 
-  Serial.println(F("Data, Hora, Latitude e Longitude"));
-  Serial.println(F("Modulo GPS GY-NEO6MV2"));
-  Serial.print(F("Biblioteca TinyGPS++ v. ")); 
-  Serial.println(TinyGPSPlus::libraryVersion());
-  Serial.println();
-  
+  Serial.println(F("Pulse Sensor"));
+  Serial.println(F("Module GPS GY-NEO6MV2"));
+  Serial.print(F("Temperature Sensor DS18B20")); 
+  Serial.println(); 
 }
 
 void loop() {
