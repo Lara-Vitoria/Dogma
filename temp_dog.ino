@@ -1,33 +1,35 @@
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include <ESP8266WiFi.h> 
-#include <ESP8266HTTPClient.h>
-#include <TinyGPS++.h>        // include TinyGPS++ library
-#include <TimeLib.h>          // include Time library
-#include <SoftwareSerial.h>   // include Software serial library
+#include <OneWire.h>            // include OneWire library
+#include <DallasTemperature.h>  // include DallasTemperature library
+#include <ESP8266WiFi.h>        // include ESP8266WiFi library
+#include <ESP8266HTTPClient.h>  // include ESP8266HTTPClient library
+#include <TinyGPS++.h>          // include TinyGPS++ library
+#include <TimeLib.h>            // include Time library
+#include <SoftwareSerial.h>     // include Software serial library
 
 
 //  Variables
 //Helix and internet
-const char* orionAddressPath = "3.88.180.168:1026/v2"; //Helix IP Address 
-const char* deviceID = "urn:ngsi-ld:entity:001"; //Device ID (example: urn:ngsi-ld:entity:001) 
-const char* ssid = "SSID"; //Wi-Fi Credentials - replace with your SSID
-const char* password = "PASSWORD"; //Wi-Fi Credentials - replace with your Password
+const char* orionAddressPath = "IP_HELIX:1026/v2";    //Helix IP Address 
+const char* deviceID = "ID_DEVICE";                   //Device ID (example: urn:ngsi-ld:entity:001) 
+const char* ssid = "SSID";                            //Wi-Fi Credentials - replace with your SSID
+const char* password = "PASSWORD";                    //Wi-Fi Credentials - replace with your Password
 
 //Pulse Sensor
-const int PulseSensorPurplePin = A0;        // Pulse Sensor PURPLE WIRE connected to ANALOG PIN 0
-const int Threshold = 550;            // Determine which Signal to "count as a beat", and which to ingore.
-int pulse;   // holds the incoming raw data. Signal value can range from 0-1024
+const int PulseSensorPurplePin = A0;                  // Pulse Sensor PURPLE WIRE connected to ANALOG PIN 0
+const int Threshold = 550;                            // Determine which Signal to "count as a beat", and which to ingore.
+int pulse;                                            // holds the incoming raw data. Signal value can range from 0-1024
 
 //DS18B20
-static const int TXPin = 5, RXPin = 16; //Pinagem TX para pino D1 e RX para o pino D2
-const int oneWireBus = 4; // GPIO where the DS18B20 is connected to 
+const int oneWireBus = 4;                             //GPIO where the DS18B20 is connected to 
 float temperature;
-OneWire oneWire(oneWireBus); // Setup a oneWire instance to communicate with any OneWire devices
-DallasTemperature sensors(&oneWire); // Pass our oneWire reference to Dallas Temperature sensor 
+OneWire oneWire(oneWireBus);                          // Setup a oneWire instance to communicate with any OneWire devices
+DallasTemperature sensors(&oneWire);                  // Pass our oneWire reference to Dallas Temperature sensor 
 
 //Module GPS
-SoftwareSerial Serial_GPS(TXPin, RXPin); //Conexão serial do module GPS
+static const int TXPin = 5, RXPin = 16;               //Pinout TX for pin D1 e RX for pin D0
+float latitude;                                       // holds the incoming raw data
+float longitude;                                      // holds the incoming raw data
+SoftwareSerial Serial_GPS(TXPin, RXPin);              //Conexão serial do module GPS
 
 WiFiClient espClient;
 HTTPClient http;
@@ -36,11 +38,10 @@ TinyGPSPlus gps;
 // The SetUp Function:
 void setup() {
 
-  Serial.begin(115200);         // Set's up Serial Communication at certain speed.
-  Serial_GPS.begin(9600); // initialize software serial at 9600 bps
+  Serial.begin(115200);                                // Set's up Serial Communication at certain speed.
+  Serial_GPS.begin(9600);                              // initialize software serial at 9600 bps
 
-  //Wi-Fi access
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid, password);                          //Wi-Fi access
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -50,11 +51,9 @@ void setup() {
   Serial.println("Connected WiFi network!");
   delay(2000);
 
-  //creating the device in the Helix Sandbox (plug&play) 
-  orionCreateEntitie(deviceID);
+  orionCreateEntitie(deviceID);                         //creating the device in the Helix Sandbox (plug&play) 
 
-  // Start the DS18B20 sensor
-  sensors.begin();
+  sensors.begin();                                      // Start the DS18B20 sensor
 
   Serial.println(F("Pulse Sensor"));
   Serial.println(F("Module GPS GY-NEO6MV2"));
@@ -65,9 +64,9 @@ void setup() {
 void loop() {
 
   //Pulse Sensor
-  pulse = analogRead(PulseSensorPurplePin);  // Read the PulseSensor's value.
-                                              // Assign this value to the "Signal" variable
-  Serial.println(pulse);                    // Send the Signal value to Serial Plotter.
+  pulse = analogRead(PulseSensorPurplePin);              // Read the PulseSensor's value.
+                                                         // Assign this value to the "Signal" variable
+  Serial.println(pulse);                                 // Send the Signal value to Serial Plotter.
   
   //Temperature Sensor
   sensors.requestTemperatures(); 
@@ -76,35 +75,38 @@ void loop() {
   Serial.print(temperature);
   Serial.println("ºC");
 
-  orionUpdate(temperature, pulse, deviceID);
+  orionUpdate(temperature, pulse, deviceID, latitude, longitude);
 
   while (Serial_GPS.available() > 0){
     if (gps.encode(Serial_GPS.read())){
-      Serial.print(gps.location.lat(), 6); //latitude
+       //latitude
+      latitude = gps.location.lat()
+      Serial.print(latitude, 6); 
       Serial.print(F(","));
-      Serial.println(gps.location.lng(), 6); //longitude
+      //longitude
+      longitude = gps.location.lng()
+      Serial.println(longitude, 6); 
     }
   }
   
-  delay(10000);
+  delay(5000);
 }
 
 //plug&play
 void orionCreateEntitie(String entitieName) {
 
-    String bodyRequest = "{\"id\": \"" + entitieName + "\", \"type\": \"iot\", \"temperature\": { \"value\": \"0\", \"type\": \"integer\"},\"pulse\": { \"value\": \"0\", \"type\": \"integer\"}}";
+    String bodyRequest = "{\"id\": \"" + entitieName + "\", \"type\": \"iot\", \"temperature\": { \"value\": \"0\", \"type\": \"integer\"},\"pulse\": { \"value\": \"0\", \"type\": \"integer\"},\"latitude\": { \"value\": \"0\", \"type\": \"float\"},\"longitude\": { \"value\": \"0\", \"type\": \"float\"}}";
     httpRequest("/entities", bodyRequest);
 }
 
 //update 
-void orionUpdate(float temperature, int pulse, String entitieName){
+void orionUpdate(float temperature, int pulse, String entitieName, float latitude, float longitude){
 
-//    String bodyRequest = "{ \"temperature\": "+ String(temperature) + ", \"pulse\": "+ String(pulse) +" }";
-    String bodyRequest = "{\"temperature\": { \"value\": \""+ String(temperature) + "\", \"type\": \"float\"}, \"pulse\": { \"value\": \""+ String(pulse) +"\", \"type\": \"float\"}}";
-//    String pathRequest = "/dogma/verify/";
+    String bodyRequest = "{\"temperature\": { \"value\": \""+ String(temperature) + "\", \"type\": \"float\"}, \"pulse\": { \"value\": \""+ String(pulse) +"\", \"type\": \"float\"}, \"latitude\": { \"value\": \""+ String(latitude) +"\", \"type\": \"float\"}, \"longitude\": { \"value\": \""+ String(longitude) +"\", \"type\": \"float\"}}";
     String pathRequest = "/entities/" + entitieName + "/attrs?options=forcedUpdate";
     httpRequest(pathRequest, bodyRequest);
 }
+
 
 //request
 void httpRequest(String path, String data)
