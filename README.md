@@ -7,7 +7,7 @@ O projeto permite o rastreio e acompanhamento da saúde de animais de estimaçã
 ## 🔨 Arquitetura do projeto!
 
 <p align="center">
-   <img src="./img/dataDog.drawio.png"/>
+   <img src="./dataDog.drawio.png"/>
 </p>
 
 <p>
